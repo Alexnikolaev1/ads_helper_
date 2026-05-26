@@ -11,6 +11,19 @@ from src.config import (
 )
 from src.services.gemini import PostGenerator
 from src.utils.parser import split_variants
+from src.utils.rate_limit import (
+    RATE_LIMIT_SECONDS,
+    block_if_rate_limited,
+    init_rate_limit,
+    seconds_until_allowed,
+)
+from src.utils.token_budget import (
+    LIMIT_MESSAGE,
+    get_budget_status,
+    init_token_budget,
+    is_budget_exhausted,
+    record_token_usage,
+)
 from ui.components import (
     export_all_text,
     render_hero,
@@ -31,10 +44,37 @@ def init_session() -> None:
     for key, value in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = value
+    init_token_budget()
+    init_rate_limit()
+
+
+def render_token_budget_sidebar() -> None:
+    status = get_budget_status()
+    used_pct = min(status.used / status.budget, 1.0) if status.budget else 0.0
+
+    st.markdown("### 📊 Бюджет токенов")
+    st.caption(f"Период: {status.month_key} (обновляется каждый месяц)")
+
+    st.progress(
+        used_pct,
+        text=f"{status.used:,} / {status.budget:,} токенов".replace(",", " "),
+    )
+    st.caption(f"Осталось: **{status.remaining:,}** токенов".replace(",", " "))
+
+    if status.exhausted:
+        st.error(LIMIT_MESSAGE)
+
+    wait = seconds_until_allowed()
+    if wait > 0:
+        st.caption(f"⏱ Следующий запрос через **{wait:.1f}** сек.")
+    else:
+        st.caption(f"Интервал между запросами: **{RATE_LIMIT_SECONDS}** сек.")
 
 
 def render_sidebar() -> GenerationOptions:
     with st.sidebar:
+        render_token_budget_sidebar()
+        st.markdown("---")
         st.markdown("### ⚙️ Настройки генерации")
         platform = st.selectbox("Платформа", list(PLATFORMS.keys()))
         tone = st.selectbox("Тон текста", TONES)
@@ -77,6 +117,49 @@ def render_examples() -> None:
                 st.rerun()
 
 
+def run_generation(
+    generator: PostGenerator,
+    brief: str,
+    options: GenerationOptions,
+) -> bool:
+    """Генерация с учётом лимита токенов и rate limit. Возвращает True при успехе."""
+    if is_budget_exhausted():
+        st.error(LIMIT_MESSAGE)
+        return False
+
+    if block_if_rate_limited():
+        return False
+
+    with st.spinner("Пишу варианты…"):
+        try:
+            result = generator.generate(brief.strip(), options)
+            record_token_usage(result.tokens_used)
+            variants = split_variants(result.text, max_count=options.variant_count)
+            if not variants:
+                st.warning("Модель вернула пустой ответ. Попробуйте ещё раз.")
+                return False
+
+            st.session_state["variants"] = variants
+            st.session_state["generated"] = True
+            st.session_state["last_brief"] = brief.strip()
+            save_to_history(
+                brief.strip(),
+                variants,
+                {
+                    "platform": options.platform,
+                    "tone": options.tone,
+                    "tokens": result.tokens_used,
+                },
+            )
+            st.caption(f"Списано токенов за запрос: **{result.tokens_used:,}**".replace(",", " "))
+            return True
+        except RuntimeError as e:
+            st.error(f"Ошибка генерации: {e}")
+        except Exception as e:
+            st.error(f"Непредвиденная ошибка: {e}")
+    return False
+
+
 def run() -> None:
     st.set_page_config(
         page_title="Ads Helper — генератор постов",
@@ -96,14 +179,17 @@ def run() -> None:
         )
         st.stop()
 
+    budget_exhausted = is_budget_exhausted()
     options = render_sidebar()
-    max_chars = PLATFORMS[options.platform]["max_chars"]
 
     st.markdown(
         '<div class="hint-box">💡 Чем конкретнее бриф (цена, срок, география, УТП) — '
         "тем точнее посты.</div>",
         unsafe_allow_html=True,
     )
+
+    if budget_exhausted:
+        st.error(LIMIT_MESSAGE)
 
     if "brief_input" not in st.session_state:
         st.session_state["brief_input"] = ""
@@ -119,7 +205,12 @@ def run() -> None:
 
     col_gen, col_clear = st.columns([2, 1])
     with col_gen:
-        generate_btn = st.button("⚡ Сгенерировать посты", type="primary", use_container_width=True)
+        generate_btn = st.button(
+            "⚡ Сгенерировать посты",
+            type="primary",
+            use_container_width=True,
+            disabled=budget_exhausted,
+        )
     with col_clear:
         if st.button("Очистить", use_container_width=True):
             st.session_state["variants"] = []
@@ -129,31 +220,12 @@ def run() -> None:
     generator = PostGenerator(api_key)
 
     if generate_btn:
-        if not brief.strip():
+        if budget_exhausted:
+            st.error(LIMIT_MESSAGE)
+        elif not brief.strip():
             st.warning("Заполните бриф перед генерацией.")
         else:
-            with st.spinner("Пишу варианты…"):
-                try:
-                    raw = generator.generate(brief.strip(), options)
-                    variants = split_variants(raw, max_count=options.variant_count)
-                    if not variants:
-                        st.warning("Модель вернула пустой ответ. Попробуйте ещё раз.")
-                    else:
-                        st.session_state["variants"] = variants
-                        st.session_state["generated"] = True
-                        st.session_state["last_brief"] = brief.strip()
-                        save_to_history(
-                            brief.strip(),
-                            variants,
-                            {
-                                "platform": options.platform,
-                                "tone": options.tone,
-                            },
-                        )
-                except RuntimeError as e:
-                    st.error(f"Ошибка генерации: {e}")
-                except Exception as e:
-                    st.error(f"Непредвиденная ошибка: {e}")
+            run_generation(generator, brief, options)
 
     if st.session_state.get("generated") and st.session_state.get("variants"):
         variants = st.session_state["variants"]
@@ -167,48 +239,56 @@ def run() -> None:
         )
 
         for i, variant in enumerate(variants, 1):
-            render_variant_card(i, variant, max_chars)
-            c1, c2 = st.columns([3, 1])
-            with c1:
-                st.text_area(
-                    f"Текст варианта {i} (выделите и Ctrl+C)",
-                    value=variant,
-                    height=160,
-                    key=f"copy_{i}",
-                    label_visibility="collapsed",
-                )
-            with c2:
+            render_variant_card(variant)
+            dl_col, regen_col = st.columns(2)
+            with dl_col:
                 st.download_button(
-                    f"Скачать #{i}",
+                    "📥 Скачать",
                     data=variant,
-                    file_name=f"post_variant_{i}.txt",
+                    file_name=f"post_{i}.txt",
                     mime="text/plain",
                     key=f"dl_{i}",
                     use_container_width=True,
                 )
-            if st.button(f"🔄 Перегенерировать #{i}", key=f"regen_{i}"):
-                with st.spinner(f"Обновляю вариант {i}…"):
-                    try:
-                        regen_options = GenerationOptions(
-                            platform=options.platform,
-                            tone=options.tone,
-                            length=options.length,
-                            variant_count=1,
-                            use_emoji=options.use_emoji,
-                            include_hashtags=options.include_hashtags,
-                            include_cta=options.include_cta,
-                        )
-                        raw = generator.generate(
-                            st.session_state.get("last_brief", brief),
-                            regen_options,
-                        )
-                        new_variants = split_variants(raw, max_count=1)
-                        if new_variants:
-                            variants[i - 1] = new_variants[0]
-                            st.session_state["variants"] = variants
-                            st.rerun()
-                    except Exception as e:
-                        st.error(str(e))
+            with regen_col:
+                regen_clicked = st.button(
+                    "🔄 Другой вариант",
+                    key=f"regen_{i}",
+                    disabled=budget_exhausted,
+                    use_container_width=True,
+                )
+            if regen_clicked:
+                if is_budget_exhausted():
+                    st.error(LIMIT_MESSAGE)
+                elif block_if_rate_limited():
+                    pass
+                else:
+                    regen_options = GenerationOptions(
+                        platform=options.platform,
+                        tone=options.tone,
+                        length=options.length,
+                        variant_count=1,
+                        use_emoji=options.use_emoji,
+                        include_hashtags=options.include_hashtags,
+                        include_cta=options.include_cta,
+                    )
+                    with st.spinner(f"Обновляю вариант {i}…"):
+                        try:
+                            result = generator.generate(
+                                st.session_state.get("last_brief", brief),
+                                regen_options,
+                            )
+                            record_token_usage(result.tokens_used)
+                            new_variants = split_variants(result.text, max_count=1)
+                            if new_variants:
+                                variants[i - 1] = new_variants[0]
+                                st.session_state["variants"] = variants
+                                st.caption(
+                                    f"Списано токенов: **{result.tokens_used:,}**".replace(",", " ")
+                                )
+                                st.rerun()
+                        except Exception as e:
+                            st.error(str(e))
             st.markdown("---")
 
     render_promo()

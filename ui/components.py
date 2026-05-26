@@ -3,8 +3,6 @@ from datetime import datetime
 
 import streamlit as st
 
-from src.config import PLATFORMS
-
 
 def render_hero() -> None:
     st.markdown(
@@ -21,20 +19,11 @@ def render_hero() -> None:
     )
 
 
-def render_variant_card(index: int, text: str, max_chars: int) -> None:
-    length = len(text)
-    warn = length > max_chars
+def render_variant_card(text: str) -> None:
     safe = html.escape(text)
-    limit_note = (
-        f'<span class="stat-pill warn">⚠ {length} / {max_chars} симв.</span>'
-        if warn
-        else f'<span class="stat-pill"><strong>{length}</strong> / {max_chars} симв.</span>'
-    )
     st.markdown(
         f"""
         <div class="post-card">
-          <div class="post-badge">Вариант {index}</div>
-          {limit_note}
           <div class="post-text">{safe}</div>
         </div>
         """,
@@ -74,7 +63,4 @@ def save_to_history(brief: str, variants: list[str], options_dict: dict) -> None
 
 
 def export_all_text(variants: list[str]) -> str:
-    blocks = []
-    for i, v in enumerate(variants, 1):
-        blocks.append(f"{'=' * 40}\nВАРИАНТ {i}\n{'=' * 40}\n{v}")
-    return "\n\n".join(blocks)
+    return "\n\n---\n\n".join(variants)
