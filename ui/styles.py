@@ -161,7 +161,24 @@ CSS = """
     margin-top: 2rem;
   }
   .promo-banner h3 { color: var(--green); font-size: 1rem; margin: 0 0 0.4rem; }
-  .promo-banner p { color: var(--muted); font-size: 0.85rem; margin: 0; line-height: 1.55; }
+  .promo-banner p { color: var(--muted); font-size: 0.85rem; margin: 0 0 1rem; line-height: 1.55; }
+  a.tg-link-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, #229ED9, #1a7fb8);
+    color: #fff !important;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none !important;
+    padding: 12px 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(34, 158, 217, 0.35);
+    transition: transform 0.15s, box-shadow 0.2s;
+  }
+  a.tg-link-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 28px rgba(34, 158, 217, 0.45);
+    color: #fff !important;
+  }
 
   .hint-box {
     background: var(--card);

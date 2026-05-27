@@ -3,7 +3,7 @@ from datetime import datetime
 
 import streamlit as st
 
-from src.config import AUTH_DEMO_BRIEF, AUTH_DEMO_POST
+from src.config import AUTH_DEMO_BRIEF, AUTH_DEMO_POST, get_telegram_link
 
 
 def render_hero() -> None:
@@ -70,6 +70,9 @@ def render_variant_card(text: str) -> None:
 def render_promo(contact: str, show: bool = True) -> None:
     if not show:
         return
+    label, url = get_telegram_link(contact)
+    safe_label = html.escape(label)
+    safe_url = html.escape(url, quote=True)
     st.markdown(
         f"""
         <hr>
@@ -79,10 +82,12 @@ def render_promo(contact: str, show: bool = True) -> None:
             <strong style="color:#10B981">990 ₽ / 30 дней</strong> —
             до <strong>100 000 токенов</strong> в месяц на генерации постов
             (примерно сотни постов, в зависимости от длины).<br><br>
-            Оплата переводом на карту → напишите в Telegram
-            <strong style="color:#10B981">{html.escape(contact)}</strong>
-            с email вашего аккаунта — мы активируем доступ вручную в течение суток.
+            Оплата переводом на карту → напишите нам в Telegram
+            с email вашего аккаунта — активируем доступ в течение суток.
           </p>
+          <a class="tg-link-btn" href="{safe_url}" target="_blank" rel="noopener noreferrer">
+            ✈️ {safe_label}
+          </a>
         </div>
         """,
         unsafe_allow_html=True,

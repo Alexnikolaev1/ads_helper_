@@ -85,7 +85,24 @@ def get_contact_telegram() -> str:
     try:
         contact = st.secrets.get("CONTACT_TELEGRAM")
         if contact:
-            return str(contact)
+            return str(contact).strip()
     except Exception:
         pass
-    return os.getenv("CONTACT_TELEGRAM", "@your_contact")
+    return os.getenv("CONTACT_TELEGRAM", "@your_contact").strip()
+
+
+def get_telegram_link(contact: str | None = None) -> tuple[str, str]:
+    """
+    Возвращает (подпись для кнопки, URL).
+    Поддерживает @ник, t.me/ник, https://t.me/ник.
+    """
+    raw = (contact or get_contact_telegram()).strip()
+    if raw.startswith(("https://t.me/", "http://t.me/")):
+        url = raw.replace("http://", "https://", 1)
+        label = "@" + url.rstrip("/").split("/")[-1]
+        return label, url
+    if raw.startswith("t.me/"):
+        username = raw.split("/")[-1]
+        return f"@{username}", f"https://t.me/{username}"
+    username = raw.lstrip("@").split("?")[0]
+    return f"@{username}", f"https://t.me/{username}"
