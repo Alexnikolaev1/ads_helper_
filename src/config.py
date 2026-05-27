@@ -55,3 +55,23 @@ def get_api_key() -> str | None:
     except Exception:
         pass
     return os.getenv("GEMINI_API_KEY")
+
+
+def get_admin_password() -> str:
+    try:
+        pwd = st.secrets.get("ADMIN_PASSWORD")
+        if pwd:
+            return str(pwd)
+    except Exception:
+        pass
+    return os.getenv("ADMIN_PASSWORD", "")
+
+
+def get_contact_telegram() -> str:
+    try:
+        contact = st.secrets.get("CONTACT_TELEGRAM")
+        if contact:
+            return str(contact)
+    except Exception:
+        pass
+    return os.getenv("CONTACT_TELEGRAM", "@your_contact")

@@ -1,5 +1,10 @@
+from datetime import date
+
 import streamlit as st
 
+from src.auth.service import get_current_user, logout_user
+from src.billing.limits import can_generate, get_usage_status, record_generation
+from src.billing.plans import FREE_GENERATIONS_LIMIT, SUBSCRIPTION_PRICE_RUB
 from src.config import (
     BRIEF_EXAMPLE,
     LENGTHS,
@@ -8,7 +13,9 @@ from src.config import (
     VARIANT_COUNTS,
     GenerationOptions,
     get_api_key,
+    get_contact_telegram,
 )
+from src.db.repository import User
 from src.services.gemini import PostGenerator
 from src.utils.parser import split_variants
 from src.utils.rate_limit import (
@@ -17,13 +24,8 @@ from src.utils.rate_limit import (
     init_rate_limit,
     seconds_until_allowed,
 )
-from src.utils.token_budget import (
-    LIMIT_MESSAGE,
-    get_budget_status,
-    init_token_budget,
-    is_budget_exhausted,
-    record_token_usage,
-)
+from ui.admin import render_admin_panel, render_admin_unlock
+from ui.auth_screen import render_auth_screen
 from ui.components import (
     export_all_text,
     render_hero,
@@ -44,36 +46,56 @@ def init_session() -> None:
     for key, value in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = value
-    init_token_budget()
     init_rate_limit()
 
 
-def render_token_budget_sidebar() -> None:
-    status = get_budget_status()
-    used_pct = min(status.used / status.budget, 1.0) if status.budget else 0.0
+def render_usage_sidebar(user: User) -> None:
+    status = get_usage_status(user)
+    st.markdown("### 📊 Ваш тариф")
+    st.caption(f"Аккаунт: **{user.email}**")
 
-    st.markdown("### 📊 Бюджет токенов")
-    st.caption(f"Период: {status.month_key} (обновляется каждый месяц)")
+    if status.plan == "paid":
+        st.success(f"Подписка до **{status.paid_until}**")
+        used_pct = (
+            min(status.tokens_used / status.tokens_budget, 1.0)
+            if status.tokens_budget
+            else 0
+        )
+        st.progress(
+            used_pct,
+            text=f"{status.tokens_used:,} / {status.tokens_budget:,} токенов".replace(",", " "),
+        )
+        st.caption(
+            f"Осталось **{status.tokens_budget - status.tokens_used:,}** токенов · "
+            f"период {status.month_key}".replace(",", " ")
+        )
+    else:
+        st.info("Бесплатный тариф")
+        free_pct = min(status.free_used / status.free_limit, 1.0)
+        st.progress(
+            free_pct,
+            text=f"{status.free_used} / {status.free_limit} генераций",
+        )
+        if status.paid_until and status.paid_until < date.today():
+            st.warning("Подписка истекла — остался только бесплатный лимит.")
 
-    st.progress(
-        used_pct,
-        text=f"{status.used:,} / {status.budget:,} токенов".replace(",", " "),
-    )
-    st.caption(f"Осталось: **{status.remaining:,}** токенов".replace(",", " "))
-
-    if status.exhausted:
-        st.error(LIMIT_MESSAGE)
+    if not status.can_generate and status.block_message:
+        st.error(status.block_message)
 
     wait = seconds_until_allowed()
     if wait > 0:
         st.caption(f"⏱ Следующий запрос через **{wait:.1f}** сек.")
     else:
-        st.caption(f"Интервал между запросами: **{RATE_LIMIT_SECONDS}** сек.")
+        st.caption(f"Пауза между запросами: **{RATE_LIMIT_SECONDS}** сек.")
+
+    if st.button("Выйти", use_container_width=True):
+        logout_user()
+        st.rerun()
 
 
-def render_sidebar() -> GenerationOptions:
+def render_sidebar(user: User) -> GenerationOptions:
     with st.sidebar:
-        render_token_budget_sidebar()
+        render_usage_sidebar(user)
         st.markdown("---")
         st.markdown("### ⚙️ Настройки генерации")
         platform = st.selectbox("Платформа", list(PLATFORMS.keys()))
@@ -88,7 +110,7 @@ def render_sidebar() -> GenerationOptions:
         st.caption(f"Лимит символов: **{PLATFORMS[platform]['max_chars']}**")
 
         if st.session_state.get("history"):
-            st.markdown("### 📜 История")
+            st.markdown("### 📜 История (сессия)")
             for i, item in enumerate(st.session_state["history"][:5]):
                 label = f"{item['time']} — {item['brief'][:40]}…"
                 if st.button(label, key=f"hist_{i}", use_container_width=True):
@@ -109,12 +131,13 @@ def render_sidebar() -> GenerationOptions:
 
 def run_generation(
     generator: PostGenerator,
+    user: User,
     brief: str,
     options: GenerationOptions,
 ) -> bool:
-    """Генерация с учётом лимита токенов и rate limit. Возвращает True при успехе."""
-    if is_budget_exhausted():
-        st.error(LIMIT_MESSAGE)
+    allowed, message = can_generate(user)
+    if not allowed:
+        st.error(message)
         return False
 
     if block_if_rate_limited():
@@ -123,7 +146,7 @@ def run_generation(
     with st.spinner("Пишу варианты…"):
         try:
             result = generator.generate(brief.strip(), options)
-            record_token_usage(result.tokens_used)
+            record_generation(user.id, result.tokens_used)
             variants = split_variants(result.text, max_count=options.variant_count)
             if not variants:
                 st.warning("Модель вернула пустой ответ. Попробуйте ещё раз.")
@@ -141,7 +164,7 @@ def run_generation(
                     "tokens": result.tokens_used,
                 },
             )
-            st.caption(f"Списано токенов за запрос: **{result.tokens_used:,}**".replace(",", " "))
+            st.caption(f"Списано токенов: **{result.tokens_used:,}**".replace(",", " "))
             return True
         except RuntimeError as e:
             st.error(f"Ошибка генерации: {e}")
@@ -157,20 +180,39 @@ def run() -> None:
         layout="wide",
         initial_sidebar_state="expanded",
     )
+
+    user = get_current_user()
+    if not user:
+        render_auth_screen()
+        st.stop()
+
     st.markdown(CSS, unsafe_allow_html=True)
     init_session()
+    render_admin_unlock()
+    render_admin_panel()
+
     render_hero()
 
     api_key = get_api_key()
     if not api_key:
         st.error(
-            "API-ключ Gemini не найден. Создайте `.streamlit/secrets.toml` "
-            "или файл `.env` с `GEMINI_API_KEY` (см. README)."
+            "API-ключ Gemini не найден. Добавьте GEMINI_API_KEY в Secrets (см. README)."
         )
         st.stop()
 
-    budget_exhausted = is_budget_exhausted()
-    options = render_sidebar()
+    if not get_admin_password():
+        st.warning(
+            "ADMIN_PASSWORD не задан — админ-панель подписок недоступна. "
+            "Добавьте в Secrets."
+        )
+
+    user = get_current_user()
+    if not user:
+        st.stop()
+
+    usage = get_usage_status(user)
+    options = render_sidebar(user)
+    contact = get_contact_telegram()
 
     st.markdown(
         '<div class="hint-box">💡 Чем конкретнее бриф (цена, срок, география, УТП) — '
@@ -178,8 +220,8 @@ def run() -> None:
         unsafe_allow_html=True,
     )
 
-    if budget_exhausted:
-        st.error(LIMIT_MESSAGE)
+    if not usage.can_generate:
+        st.error(usage.block_message)
 
     if "brief_input" not in st.session_state:
         st.session_state["brief_input"] = ""
@@ -198,7 +240,7 @@ def run() -> None:
             "⚡ Сгенерировать посты",
             type="primary",
             use_container_width=True,
-            disabled=budget_exhausted,
+            disabled=not usage.can_generate,
         )
     with col_clear:
         if st.button("Очистить", use_container_width=True):
@@ -209,12 +251,16 @@ def run() -> None:
     generator = PostGenerator(api_key)
 
     if generate_btn:
-        if budget_exhausted:
-            st.error(LIMIT_MESSAGE)
-        elif not brief.strip():
+        user = get_current_user()
+        if not user:
+            st.stop()
+        if not brief.strip():
             st.warning("Заполните бриф перед генерацией.")
         else:
-            run_generation(generator, brief, options)
+            run_generation(generator, user, brief, options)
+
+    user = get_current_user()
+    usage = get_usage_status(user) if user else usage
 
     if st.session_state.get("generated") and st.session_state.get("variants"):
         variants = st.session_state["variants"]
@@ -243,12 +289,13 @@ def run() -> None:
                 regen_clicked = st.button(
                     "🔄 Другой вариант",
                     key=f"regen_{i}",
-                    disabled=budget_exhausted,
+                    disabled=not usage.can_generate,
                     use_container_width=True,
                 )
-            if regen_clicked:
-                if is_budget_exhausted():
-                    st.error(LIMIT_MESSAGE)
+            if regen_clicked and user:
+                allowed, message = can_generate(user)
+                if not allowed:
+                    st.error(message)
                 elif block_if_rate_limited():
                     pass
                 else:
@@ -267,7 +314,7 @@ def run() -> None:
                                 st.session_state.get("last_brief", brief),
                                 regen_options,
                             )
-                            record_token_usage(result.tokens_used)
+                            record_generation(user.id, result.tokens_used)
                             new_variants = split_variants(result.text, max_count=1)
                             if new_variants:
                                 variants[i - 1] = new_variants[0]
@@ -280,4 +327,11 @@ def run() -> None:
                             st.error(str(e))
             st.markdown("---")
 
-    render_promo()
+    show_promo = usage.plan == "free" or not usage.can_generate
+    render_promo(contact, show=show_promo)
+
+    if usage.plan == "free" and usage.free_used < FREE_GENERATIONS_LIMIT:
+        st.caption(
+            f"Осталось бесплатных генераций: **{FREE_GENERATIONS_LIMIT - usage.free_used}**. "
+            f"Подписка — **{SUBSCRIPTION_PRICE_RUB} ₽/мес** после оплаты на карту."
+        )

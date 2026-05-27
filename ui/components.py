@@ -31,16 +31,21 @@ def render_variant_card(text: str) -> None:
     )
 
 
-def render_promo(contact: str = "@your_contact") -> None:
+def render_promo(contact: str, show: bool = True) -> None:
+    if not show:
+        return
     st.markdown(
         f"""
         <hr>
         <div class="promo-banner">
-          <h3>🚀 Нужен безлимит и шаблоны под нишу?</h3>
+          <h3>📩 Подписка Ads Helper</h3>
           <p>
-            Подписка <strong style="color:#10B981">990 ₽/мес</strong> —
-            неограниченные генерации, приоритет и кастомные промпты.<br><br>
-            Telegram: <strong style="color:#10B981">{html.escape(contact)}</strong>
+            <strong style="color:#10B981">990 ₽ / 30 дней</strong> —
+            до <strong>100 000 токенов</strong> в месяц на генерации постов
+            (примерно сотни постов, в зависимости от длины).<br><br>
+            Оплата переводом на карту → напишите в Telegram
+            <strong style="color:#10B981">{html.escape(contact)}</strong>
+            с email вашего аккаунта — мы активируем доступ вручную в течение суток.
           </p>
         </div>
         """,

@@ -1,74 +1,9 @@
-"""Ежемесячный бюджет токенов на сессию Streamlit."""
+"""Извлечение расхода токенов из ответа Gemini (лимиты — в src.billing)."""
 
-from __future__ import annotations
-
-from dataclasses import dataclass
-from datetime import datetime
-
-import streamlit as st
-
-MONTHLY_TOKEN_BUDGET = 500_000
 DEFAULT_TOKENS_PER_REQUEST = 500
-
-LIMIT_MESSAGE = (
-    "Ваш месячный лимит в 500 000 токенов исчерпан. "
-    "Лимит обновится автоматически. "
-    "Если вам нужен больший объем, напишите нам для обсуждения индивидуального тарифа."
-)
-
-
-@dataclass(frozen=True)
-class TokenBudgetStatus:
-    used: int
-    budget: int
-    remaining: int
-    month_key: str
-    exhausted: bool
-
-
-def _current_month_key() -> str:
-    return datetime.now().strftime("%Y-%m")
-
-
-def init_token_budget() -> None:
-    """Инициализирует или сбрасывает счётчик при смене календарного месяца."""
-    month = _current_month_key()
-    stored_month = st.session_state.get("token_month")
-    if stored_month != month:
-        # Не трогаем ключи, уже привязанные к виджетам в этом прогоне
-        st.session_state.token_month = month
-        st.session_state.tokens_used = 0
-    elif "tokens_used" not in st.session_state:
-        st.session_state.token_month = month
-        st.session_state.tokens_used = 0
-
-
-def get_budget_status() -> TokenBudgetStatus:
-    init_token_budget()
-    used = int(st.session_state.get("tokens_used", 0))
-    remaining = max(0, MONTHLY_TOKEN_BUDGET - used)
-    return TokenBudgetStatus(
-        used=used,
-        budget=MONTHLY_TOKEN_BUDGET,
-        remaining=remaining,
-        month_key=st.session_state.get("token_month", _current_month_key()),
-        exhausted=remaining <= 0,
-    )
-
-
-def is_budget_exhausted() -> bool:
-    return get_budget_status().exhausted
-
-
-def record_token_usage(tokens: int) -> None:
-    if tokens <= 0:
-        return
-    init_token_budget()
-    st.session_state.tokens_used = int(st.session_state.get("tokens_used", 0)) + tokens
 
 
 def extract_token_count(response: object) -> int:
-    """Извлекает total_tokens из ответа Gemini; иначе — значение по умолчанию."""
     usage = getattr(response, "usage_metadata", None)
     if usage is None:
         return DEFAULT_TOKENS_PER_REQUEST
