@@ -49,26 +49,31 @@ def render_auth_demo_post() -> None:
     st.markdown(
         f"""
         <div class="demo-showcase">
-          <p class="demo-showcase-title">Пример результата · так же будет у вас</p>
+          <p class="demo-showcase-title">Из брифа — в продающий пост</p>
           <div class="demo-brief-row">
             <span class="demo-brief-icon">✏️</span>
             <p class="demo-brief-text">
-              <strong>Ваш бриф:</strong> {brief}
+              <strong>Бриф клиента:</strong> {brief}
             </p>
           </div>
-          <div class="demo-connector">↓</div>
+          <div class="demo-connector">✦ AI за секунды ✦</div>
           <div class="demo-post-shell">
             <div class="demo-post-header">
               <div class="demo-avatar">❄️</div>
               <div>
-                <p class="demo-channel-name">КлиматКомфорт</p>
-                <p class="demo-channel-meta">готовый пост для соцсетей</p>
+                <p class="demo-channel-name">КлиматКомфорт <span class="demo-verified">✓</span></p>
+                <p class="demo-channel-meta">ВКонтакте · готово к публикации</p>
               </div>
             </div>
             <div class="demo-post-body">{post}</div>
+            <div class="demo-post-footer">
+              <span>❤️ 847</span>
+              <span>💬 63</span>
+              <span>↗ Поделиться</span>
+            </div>
           </div>
           <p class="demo-footnote">
-            Войдите и опишите своё предложение — получите несколько вариантов за секунды
+            Зарегистрируйтесь — получите свои варианты в таком же стиле
           </p>
         </div>
         """,

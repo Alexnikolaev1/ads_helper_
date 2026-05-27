@@ -314,9 +314,17 @@ CSS = """
   .demo-connector {
     text-align: center;
     color: var(--green);
-    font-size: 1.1rem;
-    margin: 4px 0 10px;
-    opacity: 0.85;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin: 6px 0 12px;
+    opacity: 0.9;
+  }
+  .demo-verified {
+    color: var(--green);
+    font-size: 0.75rem;
+    font-weight: 700;
   }
   .demo-post-shell {
     background: linear-gradient(165deg, #1a222c 0%, #141a22 100%);
@@ -358,12 +366,20 @@ CSS = """
     margin: 2px 0 0;
   }
   .demo-post-body {
-    padding: 16px 16px 18px;
-    font-size: 0.92rem;
-    line-height: 1.65;
+    padding: 16px 16px 12px;
+    font-size: 0.9rem;
+    line-height: 1.62;
     color: var(--text);
     white-space: pre-wrap;
     word-break: break-word;
+  }
+  .demo-post-footer {
+    display: flex;
+    gap: 16px;
+    padding: 10px 16px 14px;
+    border-top: 1px solid var(--border);
+    font-size: 0.72rem;
+    color: var(--muted);
   }
   .demo-footnote {
     text-align: center;
