@@ -174,6 +174,100 @@ CSS = """
     margin-bottom: 1rem;
   }
 
+  .demo-showcase {
+    margin: 2.2rem auto 0;
+    max-width: 520px;
+    padding: 0 0.5rem 1rem;
+  }
+  .demo-showcase-title {
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 1rem;
+  }
+  .demo-brief-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: rgba(16,185,129,0.06);
+    border: 1px solid rgba(16,185,129,0.22);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+  .demo-brief-icon { font-size: 1rem; line-height: 1.4; flex-shrink: 0; }
+  .demo-brief-text {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: #9CA3AF;
+    margin: 0;
+  }
+  .demo-brief-text strong { color: var(--green); font-weight: 600; }
+  .demo-connector {
+    text-align: center;
+    color: var(--green);
+    font-size: 1.1rem;
+    margin: 4px 0 10px;
+    opacity: 0.85;
+  }
+  .demo-post-shell {
+    background: linear-gradient(165deg, #1a222c 0%, #141a22 100%);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(16,185,129,0.06);
+  }
+  .demo-post-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.15);
+  }
+  .demo-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--green), #047857);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .demo-channel-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    line-height: 1.2;
+  }
+  .demo-channel-meta {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin: 2px 0 0;
+  }
+  .demo-post-body {
+    padding: 16px 16px 18px;
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .demo-footnote {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin: 12px 0 0;
+    line-height: 1.45;
+  }
+
   hr { border-color: var(--border) !important; margin: 1.5rem 0 !important; }
   .stSpinner > div { border-top-color: var(--green) !important; }
   #MainMenu, footer { visibility: hidden !important; }

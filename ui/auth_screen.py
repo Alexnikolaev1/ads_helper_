@@ -1,6 +1,7 @@
 import streamlit as st
 
 from src.auth.service import login_user, register_user
+from ui.components import render_auth_demo_post
 from ui.styles import CSS
 
 
@@ -46,3 +47,5 @@ def render_auth_screen() -> None:
                 st.rerun()
             else:
                 st.error(msg)
+
+    render_auth_demo_post()

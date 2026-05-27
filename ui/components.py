@@ -3,6 +3,8 @@ from datetime import datetime
 
 import streamlit as st
 
+from src.config import AUTH_DEMO_BRIEF, AUTH_DEMO_POST
+
 
 def render_hero() -> None:
     st.markdown(
@@ -12,6 +14,40 @@ def render_hero() -> None:
           <h1 class="hero-title">Рекламные посты<br><span>под вашу площадку</span></h1>
           <p class="hero-sub">
             Бриф + настройки тона и платформы → готовые варианты с CTA и хештегами
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_auth_demo_post() -> None:
+    """Пример готового поста под формой входа."""
+    brief = html.escape(AUTH_DEMO_BRIEF)
+    post = html.escape(AUTH_DEMO_POST)
+    st.markdown(
+        f"""
+        <div class="demo-showcase">
+          <p class="demo-showcase-title">Пример результата · так же будет у вас</p>
+          <div class="demo-brief-row">
+            <span class="demo-brief-icon">✏️</span>
+            <p class="demo-brief-text">
+              <strong>Ваш бриф:</strong> {brief}
+            </p>
+          </div>
+          <div class="demo-connector">↓</div>
+          <div class="demo-post-shell">
+            <div class="demo-post-header">
+              <div class="demo-avatar">❄️</div>
+              <div>
+                <p class="demo-channel-name">КлиматКомфорт</p>
+                <p class="demo-channel-meta">готовый пост для соцсетей</p>
+              </div>
+            </div>
+            <div class="demo-post-body">{post}</div>
+          </div>
+          <p class="demo-footnote">
+            Войдите и опишите своё предложение — получите несколько вариантов за секунды
           </p>
         </div>
         """,
