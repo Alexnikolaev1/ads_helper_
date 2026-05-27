@@ -30,7 +30,9 @@ def render_hero() -> None:
         """
         <div class="hero-wrap">
           <div class="hero-badge">⚡ AI-копирайтер · Ads Helper</div>
-          <h1 class="hero-title">Рекламные посты<br><span>под вашу площадку</span></h1>
+          <div class="hero-title-glow">
+            <h1 class="hero-title">Рекламные посты<br><span>под вашу площадку</span></h1>
+          </div>
           <p class="hero-sub">
             Бриф + настройки тона и платформы → готовые варианты с CTA и хештегами
           </p>

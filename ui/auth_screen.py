@@ -11,7 +11,9 @@ def render_auth_screen() -> None:
     st.markdown(
         """
         <div class="hero-wrap hero-wrap--auth">
-          <h1 class="hero-title">Генератор<br><span>рекламных постов</span></h1>
+          <div class="hero-title-glow hero-title-glow--compact">
+            <h1 class="hero-title">Генератор<br><span>рекламных постов</span></h1>
+          </div>
           <p class="hero-sub">3 бесплатные генерации · подписка после оплаты на карту</p>
         </div>
         """,

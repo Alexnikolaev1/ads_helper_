@@ -41,8 +41,67 @@ CSS = """
     font-size: 0.95rem !important;
   }
 
-  .hero-wrap { text-align: center; padding: 2rem 1rem 1.2rem; }
+  .hero-wrap {
+    text-align: center;
+    padding: 2rem 1rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
   .hero-wrap--auth { padding: 0.5rem 1rem 1rem; }
+
+  /* Заголовок: центр + анимированная обводка */
+  .hero-title-glow {
+    position: relative;
+    display: inline-block;
+    margin: 0 auto 0.95rem;
+    padding: 2px;
+    border-radius: 20px;
+    max-width: min(100%, 520px);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .hero-title-glow::before {
+    content: "";
+    position: absolute;
+    inset: -80%;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg 50deg,
+      #10B981 70deg,
+      #6EE7B7 130deg,
+      #059669 200deg,
+      #10B981 260deg,
+      transparent 310deg
+    );
+    animation: hero-ring-spin 3.5s linear infinite;
+    z-index: 0;
+  }
+  .hero-title-glow::after {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    border-radius: 18px;
+    background: linear-gradient(165deg, #12181f 0%, #0a0d0f 55%, #0f1612 100%);
+    z-index: 0;
+    box-shadow: inset 0 0 24px rgba(16, 185, 129, 0.06);
+  }
+  .hero-title-glow .hero-title {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    margin: 0;
+    padding: 1.1rem 1.75rem;
+    background: transparent;
+  }
+  .hero-title-glow--compact .hero-title {
+    padding: 0.85rem 1.35rem;
+    font-size: clamp(1.35rem, 4vw, 1.85rem) !important;
+  }
+  @keyframes hero-ring-spin {
+    to { transform: rotate(360deg); }
+  }
 
   /* Логотип-ролик на экране входа */
   section[data-testid="stMain"] [data-testid="stVideo"] {
@@ -76,11 +135,17 @@ CSS = """
   .hero-title {
     font-size: clamp(1.6rem, 4.5vw, 2.5rem);
     font-weight: 800;
-    line-height: 1.15;
+    line-height: 1.2;
     color: #fff;
-    margin: 0 0 0.7rem;
+    margin: 0;
+    text-align: center;
+    width: 100%;
   }
-  .hero-title span { color: var(--green); }
+  .hero-title span {
+    color: var(--green);
+    display: inline-block;
+    text-shadow: 0 0 28px rgba(16, 185, 129, 0.35);
+  }
   .hero-sub { color: var(--muted); font-size: 0.95rem; max-width: 520px; margin: 0 auto; line-height: 1.55; }
 
   .stats-row {
@@ -323,6 +388,11 @@ CSS = """
 
     .hero-wrap { padding: 1.25rem 0.5rem 0.75rem; }
     .hero-wrap--auth { padding: 0.25rem 0.5rem 0.75rem; }
+    .hero-title-glow { max-width: 100%; }
+    .hero-title-glow .hero-title {
+      padding: 0.9rem 1.1rem;
+      font-size: 1.45rem !important;
+    }
     section[data-testid="stMain"] [data-testid="stVideo"] {
       max-width: 150px !important;
       margin-bottom: 0.5rem !important;
