@@ -1,7 +1,7 @@
 import streamlit as st
 
 from src.config import (
-    EXAMPLE_PROMPTS,
+    BRIEF_EXAMPLE,
     LENGTHS,
     PLATFORMS,
     TONES,
@@ -107,16 +107,6 @@ def render_sidebar() -> GenerationOptions:
     )
 
 
-def render_examples() -> None:
-    st.markdown("**Быстрые примеры** — нажмите, чтобы подставить в бриф:")
-    cols = st.columns(2)
-    for i, example in enumerate(EXAMPLE_PROMPTS):
-        with cols[i % 2]:
-            if st.button(example[:42] + ("…" if len(example) > 42 else ""), key=f"ex_{i}"):
-                st.session_state["brief_input"] = example
-                st.rerun()
-
-
 def run_generation(
     generator: PostGenerator,
     brief: str,
@@ -196,12 +186,11 @@ def run() -> None:
 
     brief = st.text_area(
         "Бриф: опишите предложение",
-        placeholder="Например: доставка суши за 45 минут, промокод SUSHI20 на первый заказ",
+        placeholder=BRIEF_EXAMPLE,
         height=120,
         key="brief_input",
     )
-
-    render_examples()
+    st.caption(f"**Пример брифа:** {BRIEF_EXAMPLE}")
 
     col_gen, col_clear = st.columns([2, 1])
     with col_gen:

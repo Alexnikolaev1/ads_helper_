@@ -33,12 +33,14 @@ def _current_month_key() -> str:
 def init_token_budget() -> None:
     """Инициализирует или сбрасывает счётчик при смене календарного месяца."""
     month = _current_month_key()
-    if st.session_state.get("token_month") != month:
-        st.session_state["token_month"] = month
-        st.session_state["tokens_used"] = 0
+    stored_month = st.session_state.get("token_month")
+    if stored_month != month:
+        # Не трогаем ключи, уже привязанные к виджетам в этом прогоне
+        st.session_state.token_month = month
+        st.session_state.tokens_used = 0
     elif "tokens_used" not in st.session_state:
-        st.session_state["tokens_used"] = 0
-        st.session_state["token_month"] = month
+        st.session_state.token_month = month
+        st.session_state.tokens_used = 0
 
 
 def get_budget_status() -> TokenBudgetStatus:
@@ -62,7 +64,7 @@ def record_token_usage(tokens: int) -> None:
     if tokens <= 0:
         return
     init_token_budget()
-    st.session_state["tokens_used"] = int(st.session_state.get("tokens_used", 0)) + tokens
+    st.session_state.tokens_used = int(st.session_state.get("tokens_used", 0)) + tokens
 
 
 def extract_token_count(response: object) -> int:
