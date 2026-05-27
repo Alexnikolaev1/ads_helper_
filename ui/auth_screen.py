@@ -1,17 +1,17 @@
 import streamlit as st
 
 from src.auth.service import login_user, register_user
-from ui.components import render_auth_demo_post
+from ui.components import render_auth_demo_post, render_auth_logo
 from ui.styles import CSS
 
 
 def render_auth_screen() -> None:
     st.markdown(CSS, unsafe_allow_html=True)
+    render_auth_logo()
     st.markdown(
         """
-        <div class="hero-wrap">
-          <div class="hero-badge">⚡ Ads Helper</div>
-          <h1 class="hero-title">Вход в<br><span>генератор постов</span></h1>
+        <div class="hero-wrap hero-wrap--auth">
+          <h1 class="hero-title">Генератор<br><span>рекламных постов</span></h1>
           <p class="hero-sub">3 бесплатные генерации · подписка после оплаты на карту</p>
         </div>
         """,

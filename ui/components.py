@@ -1,9 +1,28 @@
 import html
 from datetime import datetime
+from pathlib import Path
 
 import streamlit as st
 
 from src.config import AUTH_DEMO_BRIEF, AUTH_DEMO_POST, get_telegram_link
+
+LOGO_VIDEO_PATH = Path(__file__).resolve().parent.parent / "ads_helper.mp4"
+
+
+def render_auth_logo() -> None:
+    """Логотип-ролик над формой входа / регистрации."""
+    if not LOGO_VIDEO_PATH.is_file():
+        return
+
+    _pad, col, _pad2 = st.columns([1, 1, 1])
+    with col:
+        st.video(
+            str(LOGO_VIDEO_PATH),
+            format="video/mp4",
+            loop=True,
+            autoplay=True,
+            muted=True,
+        )
 
 
 def render_hero() -> None:

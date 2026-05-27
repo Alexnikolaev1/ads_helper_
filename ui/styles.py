@@ -42,6 +42,24 @@ CSS = """
   }
 
   .hero-wrap { text-align: center; padding: 2rem 1rem 1.2rem; }
+  .hero-wrap--auth { padding: 0.5rem 1rem 1rem; }
+
+  /* Логотип-ролик на экране входа */
+  section[data-testid="stMain"] [data-testid="stVideo"] {
+    display: flex !important;
+    justify-content: center !important;
+    margin: 0.25rem auto 0.75rem !important;
+    max-width: 200px !important;
+  }
+  section[data-testid="stMain"] [data-testid="stVideo"] video {
+    width: 100% !important;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 36px rgba(16, 185, 129, 0.12);
+    background: var(--card);
+  }
   .hero-badge {
     display: inline-block;
     background: var(--green-glow);
@@ -304,6 +322,15 @@ CSS = """
     }
 
     .hero-wrap { padding: 1.25rem 0.5rem 0.75rem; }
+    .hero-wrap--auth { padding: 0.25rem 0.5rem 0.75rem; }
+    section[data-testid="stMain"] [data-testid="stVideo"] {
+      max-width: 150px !important;
+      margin-bottom: 0.5rem !important;
+    }
+    section[data-testid="stMain"] [data-testid="stVideo"] video {
+      max-height: 150px;
+      border-radius: 16px;
+    }
     .hero-title { font-size: 1.55rem !important; }
     .hero-sub { font-size: 0.88rem; padding: 0 0.25rem; }
 

@@ -38,6 +38,15 @@ copy .env.example .env
 streamlit run app.py
 ```
 
+## Логотип на экране входа
+
+Файл `ads_helper.mp4` в корне проекта. Для деплоя добавьте в git:
+
+```bash
+git add ads_helper.mp4
+git push
+```
+
 ## Secrets (Streamlit Cloud)
 
 ```toml
