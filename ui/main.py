@@ -34,6 +34,7 @@ from ui.components import (
     render_variant_card,
     save_to_history,
 )
+from ui.page_config import setup_page
 from ui.styles import CSS
 
 
@@ -175,14 +176,9 @@ def run_generation(
 
 
 def run() -> None:
-    st.set_page_config(
-        page_title="Ads Helper — генератор постов",
-        page_icon="⚡",
-        layout="wide",
-        initial_sidebar_state="expanded",
-    )
-
     user = get_current_user()
+    setup_page(logged_in=user is not None)
+
     if not user:
         render_auth_screen()
         st.stop()
@@ -234,6 +230,11 @@ def run() -> None:
         key="brief_input",
     )
     st.caption(f"**Пример брифа:** {BRIEF_EXAMPLE}")
+    st.caption(
+        '<span class="mobile-sidebar-hint">📱 На телефоне настройки — в меню '
+        '<strong>≡</strong> слева вверху.</span>',
+        unsafe_allow_html=True,
+    )
 
     col_gen, col_clear = st.columns([2, 1])
     with col_gen:

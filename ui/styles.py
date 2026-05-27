@@ -26,6 +26,11 @@ CSS = """
   [data-testid="stToolbar"] { display: none !important; }
   .block-container { padding: 1.5rem 1rem 3rem !important; max-width: 860px !important; }
 
+  /* Вход: узкая колонка по центру (layout=centered) */
+  [data-testid="stAppViewContainer"]:has(section.main .demo-showcase) .block-container {
+    max-width: 480px !important;
+  }
+
   [data-testid="stSidebar"] {
     background: var(--surface) !important;
     border-right: 1px solid var(--border) !important;
@@ -288,5 +293,85 @@ CSS = """
   hr { border-color: var(--border) !important; margin: 1.5rem 0 !important; }
   .stSpinner > div { border-top-color: var(--green) !important; }
   #MainMenu, footer { visibility: hidden !important; }
+
+  .mobile-sidebar-hint { display: none; color: var(--muted); font-size: 0.8rem; }
+
+  /* ── Планшеты и телефоны (десктоп выше 768px без изменений) ── */
+  @media (max-width: 768px) {
+    .block-container {
+      padding: 1rem 0.75rem 2.5rem !important;
+      max-width: 100% !important;
+    }
+
+    .hero-wrap { padding: 1.25rem 0.5rem 0.75rem; }
+    .hero-title { font-size: 1.55rem !important; }
+    .hero-sub { font-size: 0.88rem; padding: 0 0.25rem; }
+
+    .post-card { padding: 1rem 1.05rem; }
+    .post-text {
+      font-family: 'Manrope', sans-serif !important;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .hint-box, .promo-banner {
+      padding: 0.85rem 1rem;
+      font-size: 0.8rem;
+    }
+    .promo-banner p { font-size: 0.82rem; }
+
+    a.tg-link-btn {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px 20px;
+      font-size: 1rem;
+    }
+
+    .demo-showcase { margin-top: 1.5rem; padding: 0 0.25rem; }
+    .demo-post-body { font-size: 0.88rem; padding: 14px; }
+
+    .stButton > button {
+      min-height: 48px !important;
+      font-size: 0.95rem !important;
+    }
+
+    [data-testid="stSidebar"] .block-container {
+      padding: 0.75rem !important;
+    }
+
+    /* Кнопки в ряд → столбик; вкладки «Вход / Регистрация» остаются в ряд */
+    section[data-testid="stMain"] div[data-testid="stHorizontalBlock"] {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 0.5rem !important;
+    }
+    section[data-testid="stMain"] div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+      width: 100% !important;
+      min-width: 100% !important;
+      flex: 1 1 auto !important;
+    }
+    [data-testid="stTabs"] div[data-testid="stHorizontalBlock"] {
+      flex-direction: row !important;
+      flex-wrap: nowrap !important;
+      gap: 0 !important;
+    }
+    [data-testid="stTabs"] div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+      width: auto !important;
+      min-width: 0 !important;
+      flex: 1 1 0 !important;
+    }
+
+    .stTextArea textarea { font-size: 16px !important; }
+    .stTextInput input { font-size: 16px !important; }
+
+    .mobile-sidebar-hint { display: inline; }
+  }
+
+  @media (max-width: 480px) {
+    .hero-badge { font-size: 0.62rem; padding: 3px 10px; }
+    .hero-title { font-size: 1.4rem !important; }
+    .demo-brief-text { font-size: 0.75rem; }
+  }
 </style>
 """
